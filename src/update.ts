@@ -130,27 +130,6 @@ export const update = async (shouldCommit = false) => {
           return { result: { httpCode: 0 }, responseTime: (0).toFixed(0), status: "down" };
         }
       } else {
-      if (site.check === "wss-connect") {
-        console.log("Using websocket connection instead of curl");
-        try {
-          let status: "up" | "down" | "degraded" = "up";
-          if (parseInt(responseTime) > (site.maxResponseTime || 60000)) status = "degraded";
-          const websocketResult = await ping({
-            address: replaceEnvironmentVariables(site.url),
-            attempts: 5,
-            port: Number(replaceEnvironmentVariables(site.port ? String(site.port) : "")),
-          });
-          console.log("Got result", websocketResult);
-          return {
-            result: { httpCode: 200 },
-            responseTime: (websocketResult.avg || 0).toFixed(0),
-            status,
-          };
-        } catch (error) {
-          console.log("Got pinging error", error);
-          return { result: { httpCode: 0 }, responseTime: (0).toFixed(0), status: "down" };
-        }
-      } else {
         const result = await curl(site);
         console.log("Result from test", result.httpCode, result.totalTime);
         const responseTime = (result.totalTime * 1000).toFixed(0);
