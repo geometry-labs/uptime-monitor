@@ -1,5 +1,6 @@
 import slugify from "@sindresorhus/slugify";
 import dayjs from "dayjs";
+import WebSocket from 'ws';
 import { mkdirp, readFile, writeFile } from "fs-extra";
 import { load } from "js-yaml";
 import { join } from "path";
@@ -123,6 +124,51 @@ export const update = async (shouldCommit = false) => {
           console.log("Got result", tcpResult);
           let responseTime = (tcpResult.avg || 0).toFixed(0);
           if (parseInt(responseTime) > (site.maxResponseTime || 60000)) status = "degraded";
+          return {
+            result: { httpCode: 200 },
+            responseTime,
+            status,
+          };
+        } catch (error) {
+          console.log("ERROR Got pinging error", error);
+          return { result: { httpCode: 0 }, responseTime: (0).toFixed(0), status: "down" };
+        }
+      } else if (site.check === "ws") {
+        console.log("Using websocket check instead of curl")
+        try {
+          let status: "up" | "down" | "degraded" = "up";
+          const ws = new WebSocket(replaceEnvironmentVariables(site.url));
+          let success = false;
+          let responseTime = "0";
+
+          ws.on('open', function open() {
+            setTimeout(() => {
+                  if (site.body) {
+                    ws.send(site.body);
+                  } else {
+                    ws.send("");
+                  }
+                }
+            , site.maxResponseTime);
+            ws.close();
+          });
+
+          ws.on('message', function message(data) {
+            if (data) {
+              success = true;
+            }
+          });
+
+          ws.on('error'), function error(error) {
+            throw error;
+          }
+
+          if (success) {
+            status = "up";
+          } else {
+            status = "down";
+          };
+
           return {
             result: { httpCode: 200 },
             responseTime,
