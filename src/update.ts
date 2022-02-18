@@ -164,6 +164,10 @@ export const update = async (shouldCommit = false) => {
             throw error;
           }
 
+          ws.on('close', function close() {
+            console.log('Websocket disconnected');
+          });
+
           if (success) {
             status = "up";
           } else {
