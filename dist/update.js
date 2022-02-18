@@ -128,39 +128,39 @@ const update = async (shouldCommit = false) => {
             else if (site.check === "ws") {
                 console.log("Using websocket check instead of curl");
                 try {
-                    let status = "up";
-                    const ws = new ws_1.default((0, environment_1.replaceEnvironmentVariables)(site.url));
-                    let success = false;
-                    let responseTime = "0";
-                    ws.on('open', function open() {
-                        setTimeout(() => {
+                    setTimeout(() => {
+                        let status = "up";
+                        const ws = new ws_1.default((0, environment_1.replaceEnvironmentVariables)(site.url));
+                        let success = false;
+                        let responseTime = "0";
+                        ws.on('open', function open() {
                             if (site.body) {
                                 ws.send(site.body);
                             }
                             else {
                                 ws.send("");
                             }
-                        }, site.maxResponseTime);
-                        ws.close();
-                    });
-                    ws.on('message', function message(data) {
-                        if (data) {
-                            success = true;
+                            ws.close();
+                        });
+                        ws.on('message', function message(data) {
+                            if (data) {
+                                success = true;
+                            }
+                        });
+                        ws.on('error', function error(error) {
+                            throw error;
+                        });
+                        ws.on('close', function close() {
+                            console.log('Websocket disconnected');
+                        });
+                        if (success) {
+                            status = "up";
                         }
-                    });
-                    ws.on('error', function error(error) {
-                        throw error;
-                    });
-                    ws.on('close', function close() {
-                        console.log('Websocket disconnected');
-                    });
-                    if (success) {
-                        status = "up";
-                    }
-                    else {
-                        status = "down";
-                    }
-                    ;
+                        else {
+                            status = "down";
+                        }
+                        ;
+                    }, site.maxResponseTime);
                     return {
                         result: { httpCode: 200 },
                         responseTime,
