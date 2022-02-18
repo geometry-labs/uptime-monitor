@@ -136,20 +136,20 @@ export const update = async (shouldCommit = false) => {
       } else if (site.check === "ws") {
         console.log("Using websocket check instead of curl")
         try {
+          setTimeout(() => {
           let status: "up" | "down" | "degraded" = "up";
           const ws = new WebSocket(replaceEnvironmentVariables(site.url));
           let success = false;
           let responseTime = "0";
 
           ws.on('open', function open() {
-            setTimeout(() => {
+            
                   if (site.body) {
                     ws.send(site.body);
                   } else {
                     ws.send("");
                   }
-                }
-            , site.maxResponseTime);
+
             ws.close();
           });
 
@@ -172,7 +172,8 @@ export const update = async (shouldCommit = false) => {
           } else {
             status = "down";
           };
-
+                }
+            , site.maxResponseTime);
           return {
             result: { httpCode: 200 },
             responseTime,
