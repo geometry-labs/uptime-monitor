@@ -159,7 +159,8 @@ export const update = async (shouldCommit = false) => {
             }
           });
 
-          ws.on('error'), function error(error) {
+          // @ts-ignore
+          ws.on('error'), function error(error: any) {
             throw error;
           }
 
