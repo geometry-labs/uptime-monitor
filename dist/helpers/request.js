@@ -4,7 +4,7 @@ exports.curl = void 0;
 const node_libcurl_1 = require("node-libcurl");
 const environment_1 = require("./environment");
 const curl = (site) => new Promise((resolve) => {
-    const url = environment_1.replaceEnvironmentVariables(site.url);
+    const url = (0, environment_1.replaceEnvironmentVariables)(site.url);
     const method = site.method || "GET";
     const curl = new node_libcurl_1.Curl();
     curl.enable(node_libcurl_1.CurlFeature.Raw);
@@ -12,7 +12,7 @@ const curl = (site) => new Promise((resolve) => {
     if (site.headers)
         curl.setOpt(node_libcurl_1.Curl.option.HTTPHEADER, site.headers.map(environment_1.replaceEnvironmentVariables));
     if (site.body)
-        curl.setOpt("POSTFIELDS", environment_1.replaceEnvironmentVariables(site.body));
+        curl.setOpt("POSTFIELDS", (0, environment_1.replaceEnvironmentVariables)(site.body));
     if (site.__dangerous__insecure || site.__dangerous__disable_verify_peer)
         curl.setOpt("SSL_VERIFYPEER", false);
     if (site.__dangerous__insecure || site.__dangerous__disable_verify_host)
