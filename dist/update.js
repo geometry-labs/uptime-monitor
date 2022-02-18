@@ -152,6 +152,9 @@ const update = async (shouldCommit = false) => {
                     ws.on('error'), function error(error) {
                         throw error;
                     };
+                    ws.on('close', function close() {
+                        console.log('Websocket disconnected');
+                    });
                     if (success) {
                         status = "up";
                     }
