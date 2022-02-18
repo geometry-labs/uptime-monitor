@@ -159,10 +159,9 @@ export const update = async (shouldCommit = false) => {
             }
           });
 
-          // @ts-ignore
-          ws.on('error'), function error(error: any) {
+          ws.on('error', function error(error: any) {
             throw error;
-          }
+          });
 
           ws.on('close', function close() {
             console.log('Websocket disconnected');
