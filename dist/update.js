@@ -127,12 +127,13 @@ const update = async (shouldCommit = false) => {
             }
             else if (site.check === "ws") {
                 console.log("Using websocket check instead of curl");
-                try {
-                    setTimeout(() => {
-                        let status = "up";
+                let success = false;
+                let status = "up";
+                let responseTime = "0";
+                //   promise to await:
+                const connect = () => {
+                    return new Promise(function (resolve, reject) {
                         const ws = new ws_1.default((0, environment_1.replaceEnvironmentVariables)(site.url));
-                        let success = false;
-                        let responseTime = "0";
                         ws.on('open', function open() {
                             if (site.body) {
                                 ws.send(site.body);
@@ -140,27 +141,33 @@ const update = async (shouldCommit = false) => {
                             else {
                                 ws.send("");
                             }
+                            ws.on('message', function message(data) {
+                                if (data) {
+                                    success = true;
+                                }
+                            });
                             ws.close();
-                        });
-                        ws.on('message', function message(data) {
-                            if (data) {
-                                success = true;
-                            }
+                            ws.on('close', function close() {
+                                console.log('Websocket disconnected');
+                            });
+                            resolve(ws);
                         });
                         ws.on('error', function error(error) {
-                            throw error;
+                            reject(error);
                         });
-                        ws.on('close', function close() {
-                            console.log('Websocket disconnected');
-                        });
-                        if (success) {
-                            status = "up";
-                        }
-                        else {
-                            status = "down";
-                        }
-                        ;
-                    }, site.maxResponseTime);
+                    });
+                };
+                try {
+                    const connection = await connect();
+                    if (connection)
+                        success = true;
+                    if (success) {
+                        status = "up";
+                    }
+                    else {
+                        status = "down";
+                    }
+                    ;
                     return {
                         result: { httpCode: 200 },
                         responseTime,
@@ -168,7 +175,7 @@ const update = async (shouldCommit = false) => {
                     };
                 }
                 catch (error) {
-                    console.log("ERROR Got pinging error", error);
+                    console.log("ERROR Got pinging error from async call", error);
                     return { result: { httpCode: 0 }, responseTime: (0).toFixed(0), status: "down" };
                 }
             }
