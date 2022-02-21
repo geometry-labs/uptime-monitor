@@ -134,55 +134,54 @@ export const update = async (shouldCommit = false) => {
           return { result: { httpCode: 0 }, responseTime: (0).toFixed(0), status: "down" };
         }
       } else if (site.check === "ws") {
-        console.log("Using websocket check instead of curl")
-        try {
-          setTimeout(() => {
-          let status: "up" | "down" | "degraded" = "up";
-          const ws = new WebSocket(replaceEnvironmentVariables(site.url));
+          console.log("Using websocket check instead of curl")
           let success = false;
+          let status: "up" | "down" | "degraded" = "up";
           let responseTime = "0";
-
-          ws.on('open', function open() {
-            
-                  if (site.body) {
-                    ws.send(site.body);
-                  } else {
-                    ws.send("");
-                  }
-
-            ws.close();
-          });
-
-          ws.on('message', function message(data) {
-            if (data) {
-              success = true;
-            }
-          });
-
-          ws.on('error', function error(error: any) {
-            throw error;
-          });
-
-          ws.on('close', function close() {
-            console.log('Websocket disconnected');
-          });
-
+        //   promise to await:
+          const connect = () => { 
+              return new Promise(function(resolve, reject) {
+                const ws = new WebSocket(replaceEnvironmentVariables(site.url));
+                ws.on('open', function open() {
+                    if (site.body) {
+                      ws.send(site.body);
+                    } else {
+                      ws.send("");
+                    }
+                    ws.on('message', function message(data){
+                        if(data){
+                            success=true
+                        }
+                    })
+              ws.close();
+              ws.on('close', function close() {
+                console.log('Websocket disconnected');
+              });
+              resolve(ws)
+            });
+            ws.on('error', function error(error: any) {
+                reject(error)
+              });               
+              })
+          }
+        try {
+          const connection = await connect()
+          if(connection) success = true
           if (success) {
-            status = "up";
-          } else {
-            status = "down";
-          };
-                }
-            , site.maxResponseTime);
-          return {
-            result: { httpCode: 200 },
-            responseTime,
-            status,
-          };
-        } catch (error) {
-          console.log("ERROR Got pinging error", error);
-          return { result: { httpCode: 0 }, responseTime: (0).toFixed(0), status: "down" };
+              status = "up";
+            } else {
+                status = "down";
+            };
+            return {
+                result: { httpCode: 200 },
+                responseTime,
+                status,
+            };
         }
+     catch (error) {
+        console.log("ERROR Got pinging error from async call", error);
+        return { result: { httpCode: 0 }, responseTime: (0).toFixed(0), status: "down" };
+    }
       } else {
         const result = await curl(site);
         console.log("Result from test", result.httpCode, result.totalTime);
